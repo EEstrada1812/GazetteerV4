@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gazetteer</title>
+
+  <link rel="stylesheet" href="assets/vendors/bootstrap-5.0.0-beta1-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/vendors/Leaflet.EasyButton-master/src/easy-button.css">
+  <link rel="stylesheet" href="assets/vendors/leaflet/leaflet.css">
+  <link rel="stylesheet" href="assets/vendors/Leaflet.markercluster-1.4.1/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="assets/vendors/Leaflet.markercluster-1.4.1/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="assets/vendors/fontawesome-free-5.15.2-web/css/all.min.css">
+  <link rel="stylesheet" href='https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css'  />
+  <link rel="stylesheet" href="https://cdn.maptiler.com/mapbox-gl-js/v1.5.1/mapbox-gl.css" />
+  <link rel="stylesheet" href="assets/css/leafletMainStyle.css">
+
+</head>
+
+<body>
+  
+  <header>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top ">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Gazetteer</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <form class="d-flex align-items-end">
+            <select name="sel-country" id="selCountry" class="form-select" aria-label="Select Country" style="width:auto;"></select>
+          </form>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div id="loading">
+      <div id="loading-img">
+        <p><img src="assets\img\loading.gif"/> Loading...</p>
+      </div>
+  </div>
+
+  <div id="map"></div>
+  
+  <!--Wikipedia Modal -->
+  <div class="modal fade" id="wikiModal" tabindex="-1" aria-labelledby="wikiModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="wikiModalLabel"></h5>
+        </div>
+        <div class="modal-body">
+          <table class="table">
+            <div id="txtWikiImg"></div>
+            <tbody>
+              <tr>
+                <th scope="row">Population:</th>
+                <td id="txtPopulation"></td>
+              </tr>
+              <tr>
+                <th scope="row">Capital:</th>
+                <td id="txtCapital"></td>
+              </tr>
+              <tr>
+                <th scope="row">Language(s):</th>
+                <td id="txtLanguages"></td>
+              </tr>
+              <tr>
+                <th scope="row">Demonym:</th>
+                <td id="txtDemonym"></td>
+              </tr>
+              <tr>
+                <th scope="row">Area:</th>
+                <td id="txtArea"></td>
+              </tr>
+              <tr>
+                <th scope="row">ISO2 Country Code:</th>
+                <td id="txtIso2"></td>
+              </tr>
+              <tr>
+                <th scope="row">ISO3 Country Code:</th>
+                <td id="txtIso3"></td>
+              </tr>
+              <tr>
+                <th scope="row">Calling Code:</th>
+                <td id="txtCallingCode"></td>
+              </tr>
+              <tr>
+                <th scope="row">Country Domain:</th>
+                <td id="txtDomain"></td>
+              </tr>
+            </tbody>
+          </table>
+          <div id="txtWiki"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Covid Modal -->
+  <div class="modal fade" id="covidModal" tabindex="-1" aria-labelledby="covidModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="covidModalLabel">Covid Info</h5>
+          
+        </div>
+        <div class="modal-body short-modal">
+          <table class="table">
+            <tbody>
+              <tr>
+                <th scope="row">Cases:</th>
+                <td id="txtCovidCases"></td>
+              </tr>
+              <tr>
+                <th scope="row">Recovered:</th>
+                <td id="txtCovidRecovered"></td>
+              </tr>
+              <tr>
+                <th scope="row">Deaths:</th>
+                <td id="txtCovidDeaths"></td>
+              </tr>
+              <tr>
+                <th scope="row">Cases Per Million:</th>
+                <td id="txtCovidPerMillion"></td>
+              </tr>
+              <tr>
+                <th scope="row">Death Rate:</th>
+                <td id="txtCovidDeathRate"></td>
+              </tr>
+              <tr>
+                <th scope="row">Recovery Rate:</th>
+                <td id="txtCovidRecoveryRate"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Weather Modal -->
+  <div class="modal fade" id="weatherModal" tabindex="-1" aria-labelledby="weatherModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title txtCapitalWeatherName" id="weatherModalLabel" ></h1>
+        </div>
+        <div class="modal-body short-modal">
+          <h1 id="txtCapitalWeatherName"></h1>
+          <table class="table">
+            <tbody>
+              <tr>
+                <td id="CapitalWeatherIcon"></td>
+                <th scope="row">Current Temp:</th>
+                <td id="txtCapitalWeatherCurrent"></td>
+              </tr>
+              <tr>
+                <td id="CapitalWindIcon"></td>
+                <th class="text-sm-left" scope="row">Windspeed:</th>
+                <td id="txtCapitalWeatherWindspeed"></td>
+              </tr>
+              <tr>
+                <td id="CapitalHumidityIcon"></td>
+                <th scope="row">Humidity:</th>
+                <td id="txtCapitalWeatherHumidity">2</td>
+              </tr>
+              <tr>
+                <td class="CapitalHiTempIcon"></td>
+                <th scope="row">High:</th>
+                <td id="txtCapitalWeatherHi"></td>
+              </tr>
+              <tr>
+                <td class="CapitalLoTempIcon"></td>
+                <th scope="row">Low:</th>
+                <td id="txtCapitalWeatherLo"></td>
+              </tr>
+              <tr>
+                <td class="CapitalHiTempIcon"></td>
+                <th scope="row">Tomorrow's High:</th>
+                <td id="txtCapitalTomorrowsWeatherHi"></td>
+              </tr>
+              <tr>
+                <td class="CapitalLoTempIcon"></td>
+                <th scope="row">Tomorrow's Low:</th>
+                <td id="txtCapitalTomorrowsWeatherLo"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- exchange rates modal -->
+  <div class="modal fade" id="currencyModal" tabindex="-1" aria-labelledby="currencyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="currencyModalLabel">Currency Info</h5>
+          
+        </div>
+        <div class="modal-body short-modal">
+          <table class="table">
+            <tbody>
+              <tr class="success">
+                <td>Name:</td>
+                <td id="txtCurrency"></td>
+
+              </tr>
+              <tr class="info">
+                <td>Code:</td>
+                <td id="txtCurrencyCode"></td>
+              </tr>
+              <tr class="success">
+                <td>Symbol:</td>
+                <td id="txtCurrencySymbol"></td>
+              </tr>
+              <tr class="info">
+                <td>Exhange Rate:</td>
+                <td id="txtRate">$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News modal -->
+  <div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newsModalLabel">News</h5>
+          
+        </div>
+        <div class="modal-body short-modal">
+          <div id="myCarousel" class="carousel slide" data-bs-ride="carousel">
+            <ol class="carousel-indicators">
+              <li data-bs-target="#myCarousel" data-bs-slide-to="0" class="active"></li>
+              <li data-bs-target="#myCarousel" data-bs-slide-to="1"></li>
+              <li data-bs-target="#myCarousel" data-bs-slide-to="2"></li>
+              <li data-bs-target="#myCarousel" data-bs-slide-to="3"></li>
+              <li data-bs-target="#myCarousel" data-bs-slide-to="4"></li>
+            </ol>
+
+            <div class="carousel-inner">
+              <div id="imgArticleZeroContainer" class="carousel-item active" >
+                <div class="container">
+                  <div class="carousel-caption text-start">
+                    <h5 id="txtArticleNameZero"></h5>
+                    <p><a id="articleLinkZero" class="btn btn-lg btn-primary" href="" role="button">Read Article</a></p>
+                  </div>
+                </div>
+              </div>
+
+              <div id="imgArticleOneContainer" class="carousel-item">
+                <div class="container">
+                  <div class="carousel-caption text-start">
+                    <h5 id="txtArticleNameOne"></h5>
+                    <p><a id="articleLinkOne" id="articleLinkZero" class="btn btn-lg btn-primary" href="" role="button">Read Article</a></p>
+                  </div>
+                </div>
+              </div>
+
+              <div id="imgArticleTwoContainer" class="carousel-item">
+                <div class="container">
+                  <div class="carousel-caption text-start">
+                    <h5 id="txtArticleNameTwo"></h5>
+                    <p><a id="articleLinkTwo" class="btn btn-lg btn-primary" href="" role="button">Read Article</a></p>
+                  </div>
+                </div>
+              </div>
+
+              <div id="imgArticleThreeContainer" class="carousel-item">
+                <div class="container">
+                  <div class="carousel-caption text-start">
+                    <h5 id="txtArticleNameThree"></h5>
+                    <p><a id="articleLinkThree" id="articleLinkZero" class="btn btn-lg btn-primary" href="" role="button">Read Article</a></p>
+                  </div>
+                </div>
+              </div>
+
+              <div id="imgArticleFourContainer" class="carousel-item">
+                <div class="container">
+                  <div class="carousel-caption text-start">
+                    <h5 id="txtArticleNameFour"></h5>
+                    <p><a id="articleLinkFour" class="btn btn-lg btn-primary" href="" role="button">Read Article</a></p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <a class="carousel-control-prev" href="#myCarousel" role="button" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#myCarousel" role="button" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </a>
+          </div>
+          
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- unesco modal -->
+  <div class="modal fade" id="unescoModal" tabindex="-1" aria-labelledby="unescoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="unescoModalLabel"></h5>
+          
+        </div>
+        <div class="modal-body">
+          <h3>This country does not contain UNESCO (cultural) World Heritage Sites</h3>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay"></div>
+  
+  <script src="assets/vendors/jquery-3.5.1.min.js"></script>
+  <script src="assets/vendors/bootstrap-5.0.0-beta1-dist/js/bootstrap.min.js"></script>
+  <script src="assets/vendors/leaflet/leaflet.js"></script>
+  <script src="assets/vendors/Leaflet.EasyButton-master/src/easy-button.js"></script>
+  <script src="assets/vendors/Leaflet.markercluster-1.4.1/dist/leaflet.markercluster.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js"></script>
+  <script src="https://cdn.maptiler.com/mapbox-gl-leaflet/latest/leaflet-mapbox-gl.js"></script>
+  <script src="assets/js/leafletApp.js"></script>
+  
+</body>
+
+</html>
