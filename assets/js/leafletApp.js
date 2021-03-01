@@ -308,22 +308,22 @@ $('#selCountry').on('change', function() {
 
 
                 //Bing News
-                // if ( $('.carousel-inner').text().length != 0 ) {
-                //     $('.carousel-inner').empty();
-                // }
+                if ( $('.carousel-inner').text().length != 0 ) {
+                    $('.carousel-inner').empty();
+                }
                 
-                // if ( $('.carousel-inner').text().length == 0 ) {
-                //     for (let i = 0; i < result.data.BingNews.value.length; i++) {
-                //         if (result.data.BingNews.value[i].image) {
-                //             $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(${result.data.BingNews.value[i].image.contentUrl});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
-                //         }   
-                //     else {
-                //         $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(assets/img/image-not-available.jpg});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
-                //         }
-                //     };
-                // }
+                if ( $('.carousel-inner').text().length == 0 ) {
+                    for (let i = 0; i < result.data.BingNews.value.length; i++) {
+                        if (result.data.BingNews.value[i].image) {
+                            $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(${result.data.BingNews.value[i].image.contentUrl});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
+                        }   
+                    else {
+                        $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(assets/img/image-not-available.jpg});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
+                        }
+                    };
+                }
 
-                // $('.carousel-inner').find('.carousel-item:first' ).addClass( 'active' );
+                $('.carousel-inner').find('.carousel-item:first' ).addClass( 'active' );
 
             //UNESCO Sites
             unescoNumber = result.data.unescoSites.nhits;
@@ -437,7 +437,7 @@ $('#selCountry').on('change', function() {
                 
                 result.data.wikiCitiesTextData.forEach(city => {
                     if (city.geonames.length !== 0) {
-                        if (result.data.wikiCitiesTextData[0].geonames[0].countryCode === borderCountryCode && city.geonames[0].title.includes(cityName)) {
+                        if (city.geonames[0].countryCode === borderCountryCode && city.geonames[0].title.includes(cityName)) {
                             cityInfo = city.geonames[0].summary;
                             cityThumbnailImg = city.geonames[0].thumbnailImg;
                             cityUrl = city.geonames[0].wikipediaUrl;
@@ -478,7 +478,8 @@ $('#selCountry').on('change', function() {
                             });
                     }
 
-                    var largeCityMarker = L.marker(new L.LatLng(cityLat, cityLng), ({icon: cityIcon})).bindPopup(`<div class="markerContainer"><h3>${cityName}</h3><img class="markerThumbnail" src='${cityThumbnailImg}' onerror="this.style.display='none'"><p class="markerTxtDescription">${cityInfo}</p><div id="city-link"><a href="//${cityUrl}" target="_blank">${cityText}</a></div></div>`, cityOptions).on('click', function() {
+                    var largeCityMarker = L.marker(new L.LatLng(cityLat, cityLng), ({icon: cityIcon})).bindPopup(`<div class="markerContainer"><h3>${cityName}</h3><img class="markerThumbnail" src='${cityThumbnailImg}' onerror="this.style.display='none'"><p class="markerTxtDescription">${cityInfo}</p><div id="city-link"><a href="//${cityUrl}" target="_blank">${cityText}</a></div></div>`, cityOptions).once('click', function(e) {
+                        map.flyTo(e.latlng, 10);
                         $.ajax({
                             url: "assets/php/wikiLoops.php",
                             type: 'GET',
