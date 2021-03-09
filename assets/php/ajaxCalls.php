@@ -33,7 +33,6 @@
 
     $countryName = $border['properties']['name'];
     $countryNameNoSpace = preg_replace('/\s+/', '%20', $countryName);
-    $wikiCountryName = preg_replace('/\s+/', '_', $countryName);
     
     $countryCodeA2 = $border['properties']['iso_a2'];
     $countryCodeA3 = $border['properties']['iso_a3'];
@@ -75,102 +74,7 @@
     $capitalData = json_decode($result,true);   
     
     $capitalLat = $capitalData['data'][0]['latitude'];
-    $capitalLng = $capitalData['data'][0]['longitude'];
-    
-    //Weather Api
-    $url='api.openweathermap.org/data/2.5/onecall?lat='. $capitalLat . '&lon='. $capitalLng .'&exclude=minutely,hourly,alerts&units=metric&appid=4ef2716ffdcebe56f05f86c5c6adb952';
-    $ch = curl_init();
-
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_URL,$url);
-
-    $result=curl_exec($ch);
-
-    curl_close($ch);
-
-    $weather = json_decode($result,true);
-
-    //Covid Api Call
-    $url='https://corona-api.com/countries/'. $countryCodeA2;
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-    $covid = json_decode($result,true);
-    
-    //Currency Exchange Rates
-    $url='http://data.fixer.io/api/latest?access_key=fef7dc3a8df32be65a3006deb15fe2bf';
-    //$url='http://data.fixer.io/api/latest?access_key=8bc8db0d02010c50047f53ccf9889388';
-    //$url='https://openexchangerates.org/api/latest.json?app_id=172dd560a2bd4ea38005129d6fae498d';
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-    $exchangeRates = json_decode($result,true);
-
-    foreach ($exchangeRates['rates'] as $code => $rate) {
-        if ($code ==  $currentCurrency) {
-            $output['data']['currentRate'] = $rate;
-            break;
-        } else {
-            $output['data']['currentRate'] = 'Rate not available';
-        }
-    }
-
-    //Wiki Country Excerpt
-    $url='https://en.wikipedia.org/api/rest_v1/page/summary/' . $wikiCountryName .'?redirect=true';
-    
-    $ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-	$wikiCountryExcerpt = json_decode($result,true);	
-
-    //Bing News API
-    $accessKey = '548e929165324c1a8299320a99b97056';
-
-    $endpoint = 'https://api.bing.microsoft.com/v7.0/news/search';
-
-    $term = $countryName;
-
-    function BingNewsSearch ($url, $key, $query) {
-        $headers = "Ocp-Apim-Subscription-Key: $key\r\n";
-        $options = array ('http' => array (
-                            'header' => $headers,
-                            'method' => 'GET' ));
-        $context = stream_context_create($options);
-        $result = file_get_contents($url . "?q=" . urlencode($query)."&originalImg=true&setLang=en-gb&mkt=en-GB&count=6", false, $context);
-        $headers = array();
-        foreach ($http_response_header as $k => $v) {
-            $h = explode(":", $v, 2);
-            if (isset($h[1]))
-                if (preg_match("/^BingAPIs-/", $h[0]) || preg_match("/^X-MSEdge-/", $h[0]))
-                    $headers[trim($h[0])] = trim($h[1]);
-        }
-        return array($headers, $result);
-    }
-    list($headers, $json) = BingNewsSearch($endpoint, $accessKey, $term);
-
-    $bingNews = json_decode($json, true);
+    $capitalLng = $capitalData['data'][0]['longitude'];  
 
     //UNESCO Sites
     // $url='https://data.opendatasoft.com/api/records/1.0/search/?dataset=world-heritage-list%40public-us&q='.$countryFullName.'&rows=20&sort=date_inscribed&facet=category&facet=region&facet=states&refine.category=Cultural&refine.states='.$countryFullName;
@@ -262,7 +166,7 @@
     foreach ($largeCities['records'] as $key => $value) {
         $cityName = preg_replace('/\s+/', '%20', $value['fields']['name']);
             //wiki city wiki text info
-            $url='http://api.geonames.org/wikipediaSearchJSON?formatted=true&q=' . $cityName .'&maxRows=10&username=estrada1107&style=full';
+            $url='http://api.geonames.org/wikipediaSearchJSON?formatted=true&q=' . $cityName .'&maxRows=5&username=estrada1107&style=full';
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -288,17 +192,11 @@
     $output['data']['border'] = $border;
     $output['data']['restCountries'] = $restCountries;
     $output['data']['capitalData'] = $capitalData['data'][0];
-    $output['data']['weather'] = $weather;
-    $output['data']['covidData'] = $covid;
-    $output['data']['exchangeRates'] = $exchangeRates;
-    $output['data']['wikiCountryExcerpt'] = $wikiCountryExcerpt;
-    $output['data']['BingNews'] = $bingNews;
     $output['data']['unescoSites'] = $unesco;
     $output['data']['capCityHospitals'] = $capCityHospitals;
     $output['data']['capCityAirports'] = $capCityAirports;
     $output['data']['capCityParks'] = $capCityParks;
     $output['data']['capCityMuseums'] = $capCityMuseums;
-    
     $output['data']['wikiCitiesTextData'] = $wikiCitiesTextData;
 
     echo json_encode($output);

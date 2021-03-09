@@ -1,6 +1,12 @@
 let countryName;
 let border;
 let currentCountry;
+let currentCurrency;
+
+let currencyCode;
+let currencyName;
+let currencySymbol;
+
 
 let capitalCityName;
 
@@ -16,6 +22,15 @@ let capCityCluster;
 let wikiCluster;
 let largeCityCluster;
 
+let borderCountryCode;
+
+let capitalLat;
+let capitalLng;
+
+//Function to add commas to numbers
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 //map
 mapboxgl.accessToken = 'pk.eyJ1IjoiZXN0cmFkYTExMDciLCJhIjoiY2p3cmkxaXE1MWs2ajRibGV4bjZna2cyZyJ9.rfXkxJ59K98sg9us_cOj3w';
@@ -42,76 +57,157 @@ var baseMaps = {
 
 L.control.layers(baseMaps).addTo(map);
 
-//easy buttons
+//Country Information Easy Button
 L.easyButton('<i class="fas fa-info"></i>', function(){
+    $.ajax({
+        url: "assets/php/wikiCountryExcerpts.php",
+        type: 'GET',
+        dataType: "json",
+        data: {
+            countryName: countryName
+        },
+        success: function(result) {
+            $('#txtWikiImg').html(`<img id='flag' src='${result.data.wikiCountryExcerpt.thumbnail.source}'><br>`);
+            $('#txtWiki').html('<br>Wikipedia: ' + result.data.wikiCountryExcerpt.extract_html +'<br>');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('CountryExcerpt Data Error',textStatus, errorThrown);
+        }
+    });
     $('#wikiModal').modal('show');
 }, 'Country Infomation').addTo(map);
 
+//Weather Easy Button
 L.easyButton('<i class="fas fa-cloud-sun"></i>', function(){
+    $.ajax({
+        url: "assets/php/weather.php",
+        type: 'GET',
+        dataType: "json",
+        data: {
+            capitalLat: capitalLat,
+            capitalLng: capitalLng
+        },
+        success: function(result) {
+            let weatherIcon = result.data.weather.current.weather[0].icon;
+                
+            $('.txtCapitalWeatherName').html(capitalCityName);
+            $('#txtCapitalWeatherCurrent').html( Math.round(result.data.weather.current.temp) +'&#8451<br>');
+            $('#txtCapitalWeatherDescription').html( result.data.weather.current.weather[0].description);
+            $('#txtCapitalWeatherWindspeed').html(result.data.weather.current.wind_speed + ' km/h');
+            $('#txtCapitalWeatherHumidity').html( Math.round(result.data.weather.current.humidity) +'&#37');
+            $('#txtCapitalWeatherLo').html( Math.round(result.data.weather.daily[0].temp.min) +'&#8451<br>');
+            $('#txtCapitalWeatherHi').html( Math.round(result.data.weather.daily[0].temp.max) +'&#8451<br>');
+            $('#txtCapitalTomorrowsWeatherLo').html( Math.round(result.data.weather.daily[1].temp.min) +'&#8451<br>');
+            $('#txtCapitalTomorrowsWeatherHi').html( Math.round(result.data.weather.daily[1].temp.max) +'&#8451<br>');
+            $('#CapitalWeatherIcon').html( `<img src="https://openweathermap.org/img/wn/${weatherIcon}@2x.png" width="24px">`);
+            $('#CapitalHumidityIcon').html('<img src="assets/img/icons/humidity.svg" width="24px">');
+            $('#CapitalWindIcon').html('<img src="assets/img/icons/007-windy.svg" width="24px">');
+            $('.CapitalHiTempIcon').html('<img src="assets/img/icons/temperatureHi.svg" width="24px">');
+            $('.CapitalLoTempIcon').html('<img src="assets/img/icons/temperatureLo.svg" width="24px">');
+
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('Weather Data Error',textStatus, errorThrown);
+        }
+    });
     $('#weatherModal').modal('show');
 }, 'Weather').addTo(map);
 
+//News Easy Button
 L.easyButton('<i class="far fa-newspaper"></i>', function(){
+    $.ajax({
+        url: "assets/php/bingNews.php",
+        type: 'GET',
+        dataType: "json",
+        data: {
+            countryName: countryName
+        },
+        success: function(result) {
+            if ( $('.carousel-inner').text().length != 0 ) {
+                $('.carousel-inner').empty();
+            }
+            
+            if ( $('.carousel-inner').text().length == 0 ) {
+                for (let i = 0; i < result.data.BingNews.value.length; i++) {
+                    if (result.data.BingNews.value[i].image) {
+                        $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(${result.data.BingNews.value[i].image.contentUrl});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
+                    }   
+                else {
+                    $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(assets/img/image-not-available.jpg});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
+                    }
+                };
+            }
+
+            $('.carousel-inner').find('.carousel-item:first' ).addClass( 'active' );
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('Bing News Error',textStatus, errorThrown);
+        }
+    });
     $('#newsModal').modal('show');
 }, 'News').addTo(map);
 
+
+//Exchange Rates Easy Button
 L.easyButton('<i class="fas fa-money-bill-wave"></i>', function(){
+    $.ajax({
+        url: "assets/php/exchangeRates.php",
+        type: 'GET',
+        dataType: "json",
+        data: {
+            currentCurrency: currentCurrency
+        },
+        success: function(result) {
+            console.log(result);
+            let exchangeRate = result.data.currentRate;
+            $('#txtCurrencySymbol').html(currencySymbol);
+            $('#txtCurrency').html(currencyName);
+            $('#txtCurrencyCode').html(currencyCode);
+            if (isNaN(exchangeRate)) {
+                $('#txtRate').html( 'Exchange Rate Not Found');
+            } else {
+                $('#txtRate').html( exchangeRate.toFixed(2) + ' ' + currencyCode + ' to 1 EURO.');
+            };
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('ExchangeRate Data Error',textStatus, errorThrown);
+        }
+    });
     $('#currencyModal').modal('show');
 }, 'Currency Information').addTo(map);
 
+//Covid Easy Button
 L.easyButton('<i class="fas fa-virus"></i>', function(){
-        $('#covidModal').modal('show');
+    $.ajax({
+        url: "assets/php/covid.php",
+        type: 'GET',
+        dataType: "json",
+        data: {
+            countryCodeA2: borderCountryCode
+        },
+        success: function(result) {
+
+            let covidDeaths = result.data.covidData.data.latest_data.deaths;
+            let covidConfirmed = result.data.covidData.data.latest_data.confirmed;
+            let covidcritical = result.data.covidData.data.latest_data.recovered;
+            let covidPerMil = result.data.covidData.data.latest_data.calculated.cases_per_million_population;
+            
+            $('#covidModalLabel').html('Latest Covid data for: ' + countryName);
+            $('#txtCovidDeaths').html(numberWithCommas(covidDeaths));
+            $('#txtCovidCases').html(numberWithCommas(covidConfirmed));
+            $('#txtCovidRecovered').html(numberWithCommas(covidcritical));
+            $('#txtCovidPerMillion').html(numberWithCommas(covidPerMil));
+            $('#txtCovidDeathRate').html( Math.round(result.data.covidData.data.latest_data.calculated.death_rate) +'&#37');
+            $('#txtCovidRecoveryRate').html( Math.round(result.data.covidData.data.latest_data.calculated.recovery_rate) +'&#37');
+
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('Covid Data Error',textStatus, errorThrown);
+        }
+    });
+
+    $('#covidModal').modal('show');
 }, 'Covid-19 Information').addTo(map);
-
-
-
-//UNESCO Markers Toggle
-// let unescoToggle = L.easyButton({
-//     states: [{
-//       stateName: 'add-markers',
-//       icon: '<i class="fas fa-landmark"></i>',
-//       title: 'UNESCO (Cultural) World Heritage Sites',
-//       onClick: function(control) {
-//         if(unescoNumber === 0) {
-//             $('#unescoModal').modal('show');
-//             $( '[title]="UNESCO World Heritage Sites"' ).removeClass( "remove-markers-active" ).addClass( "add-markers-active" );
-//         };
-//         map.addLayer(unescoLayerGroup);
-//         control.state('remove-markers');
-        
-//       }
-//     }, {
-//       icon: 'fa-undo',
-//       stateName: 'remove-markers',
-//       onClick: function(control) {
-//         map.removeLayer(unescoLayerGroup);
-//         control.state('add-markers');
-//       },
-//       title: 'Remove UNESCO Markers'
-//     }]
-//   }).addTo(map);
-
-  //Capital City Cluster Easy Button Toggle
-// let capCityToggle = L.easyButton({
-//     states: [{
-//       stateName: 'add-markers',
-//       icon: '<i class="fas fa-city"></i>',
-//       title: 'Places of Interest',
-//       onClick: function(control) {
-//         map.addLayer(capCityCluster);
-//         control.state('remove-markers');
-        
-//       }
-//     }, {
-//       icon: 'fa-undo',
-//       stateName: 'remove-markers',
-//       onClick: function(control) {
-//         map.removeLayer(capCityCluster);
-//         control.state('add-markers');
-//       },
-//       title: 'Remove Places of Interest'
-//     }]
-//   }).addTo(map);
 
 
 $(document).ready(function () { 
@@ -134,37 +230,37 @@ $(document).ready(function () {
             //sort options alphabetically
             $("#selCountry").html($("#selCountry option").sort(function (a, b) {
                 return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
-                }))
+                }));
 
-            //User's Location info to change select option
-            //User's Location info
-const successCallback = (position) => {
-    $.ajax({
-        url: "assets/php/openCage.php",
-        type: 'GET',
-        dataType: 'json',
-        data: {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-        },
-
-        success: function(result) {
             
-            console.log('openCage User Location',result);
-            currentLat = result.data[0].geometry.lat;
-            currentLng = result.data[0].geometry.lng;
+//User's Location info
+    const successCallback = (position) => {
+        $.ajax({
+            url: "assets/php/openCage.php",
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+            },
 
-            $("selectOpt select").val(result.data[0].components["ISO_3166-1_alpha-2"]);
+            success: function(result) {
+                
+                console.log('openCage User Location',result);
+                currentLat = result.data[0].geometry.lat;
+                currentLng = result.data[0].geometry.lng;
+
+                $("selectOpt select").val(result.data[0].components["ISO_3166-1_alpha-2"]);
+                
+                currentCountry = result.data[0].components["ISO_3166-1_alpha-2"];
+                $("#selCountry").val(currentCountry).change();
             
-            currentCountry = result.data[0].components["ISO_3166-1_alpha-2"];
-            $("#selCountry").val(currentCountry).change();
-        
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log(textStatus, errorThrown);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log(textStatus, errorThrown);
+            }
+        }); 
         }
-    }); 
-    }
 
     const errorCallback = (error) => {
             console.error(error);
@@ -178,7 +274,7 @@ const successCallback = (position) => {
 
 //Main Ajax Call
 $('#selCountry').on('change', function() {
-    let borderCountryCode = $("#selCountry").val();
+    borderCountryCode = $("#selCountry").val();
     
     $.ajax({
         url: "assets/php/ajaxCalls.php",
@@ -218,55 +314,13 @@ $('#selCountry').on('change', function() {
                 //set variables to reuse
                 countryName = result.data.border.properties.name;
                 capitalCityName = result.data.restCountries.capital;
-
-                //weather info
-                let weatherIcon = result.data.weather.current.weather[0].icon;
+                currentCurrency = result.data.restCountries.currencies[0].code;
+                capitalLng = result.data.capitalData.latitude;
+                capitalLat = result.data.capitalData.longitude;
+                currencyCode = result.data.restCountries.currencies[0].code;
+                currencyName = result.data.restCountries.currencies[0].name;
+                currencySymbol = result.data.restCountries.currencies[0].symbol;
                 
-                $('.txtCapitalWeatherName').html(capitalCityName);
-                $('#txtCapitalWeatherCurrent').html( Math.round(result.data.weather.current.temp) +'&#8451<br>');
-                $('#txtCapitalWeatherDescription').html( result.data.weather.current.weather[0].description);
-                $('#txtCapitalWeatherWindspeed').html(result.data.weather.current.wind_speed + ' km/h');
-                $('#txtCapitalWeatherHumidity').html( Math.round(result.data.weather.current.humidity) +'&#37');
-                $('#txtCapitalWeatherLo').html( Math.round(result.data.weather.daily[0].temp.min) +'&#8451<br>');
-                $('#txtCapitalWeatherHi').html( Math.round(result.data.weather.daily[0].temp.max) +'&#8451<br>');
-                $('#txtCapitalTomorrowsWeatherLo').html( Math.round(result.data.weather.daily[1].temp.min) +'&#8451<br>');
-                $('#txtCapitalTomorrowsWeatherHi').html( Math.round(result.data.weather.daily[1].temp.max) +'&#8451<br>');
-                $('#CapitalWeatherIcon').html( `<img src="https://openweathermap.org/img/wn/${weatherIcon}@2x.png" width="24px">`);
-                $('#CapitalHumidityIcon').html('<img src="assets/img/icons/humidity.svg" width="24px">');
-                $('#CapitalWindIcon').html('<img src="assets/img/icons/007-windy.svg" width="24px">');
-                $('.CapitalHiTempIcon').html('<img src="assets/img/icons/temperatureHi.svg" width="24px">');
-                $('.CapitalLoTempIcon').html('<img src="assets/img/icons/temperatureLo.svg" width="24px">');
-
-                //Covid info
-                let covidDeaths = result.data.covidData.data.latest_data.deaths;
-                let covidConfirmed = result.data.covidData.data.latest_data.confirmed;
-                let covidcritical = result.data.covidData.data.latest_data.recovered;
-                let covidPerMil = result.data.covidData.data.latest_data.calculated.cases_per_million_population;
-                function numberWithCommas(x) {
-                    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                }
-
-                $('#covidModalLabel').html('Latest Covid data for: ' + countryName);
-                $('#txtCovidDeaths').html(numberWithCommas(covidDeaths));
-                $('#txtCovidCases').html(numberWithCommas(covidConfirmed));
-                $('#txtCovidRecovered').html(numberWithCommas(covidcritical));
-                $('#txtCovidPerMillion').html(numberWithCommas(covidPerMil));
-                $('#txtCovidDeathRate').html( Math.round(result.data.covidData.data.latest_data.calculated.death_rate) +'&#37');
-                $('#txtCovidRecoveryRate').html( Math.round(result.data.covidData.data.latest_data.calculated.recovery_rate) +'&#37');
-
-                //currency info and exchange rate
-                let currencyCode = result.data.restCountries.currencies[0].code;
-                let currencyName = result.data.restCountries.currencies[0].name;
-                let currencySymbol = result.data.restCountries.currencies[0].symbol;
-                let exchangeRate = result.data.currentRate;
-                $('#txtCurrencySymbol').html(currencySymbol);
-                $('#txtCurrency').html(currencyName);
-                $('#txtCurrencyCode').html(currencyCode);
-                if (isNaN(exchangeRate)) {
-                    $('#txtRate').html( 'Exchange Rate Not Found');
-                } else {
-                    $('#txtRate').html( exchangeRate.toFixed(2) + ' ' + currencyCode + ' to 1 EURO.');
-                };
 
                 //wiki country summary
                 let popoulation =  numberWithCommas(result.data.restCountries.population);
@@ -303,27 +357,10 @@ $('#selCountry').on('change', function() {
                 $('#txtCallingCode').html("+" + callingCode);
                 $('#txtDemonym').html(demonym);
                 $('#txtDomain').html(domain);
-                $('#txtWikiImg').html(`<img id='flag' src='${result.data.wikiCountryExcerpt.thumbnail.source}'><br>`);
-                $('#txtWiki').html('<br>Wikipedia: ' + result.data.wikiCountryExcerpt.extract_html +'<br>');
-
-
-                //Bing News
-                if ( $('.carousel-inner').text().length != 0 ) {
-                    $('.carousel-inner').empty();
-                }
                 
-                if ( $('.carousel-inner').text().length == 0 ) {
-                    for (let i = 0; i < result.data.BingNews.value.length; i++) {
-                        if (result.data.BingNews.value[i].image) {
-                            $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(${result.data.BingNews.value[i].image.contentUrl});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
-                        }   
-                    else {
-                        $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(assets/img/image-not-available.jpg});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
-                        }
-                    };
-                }
 
-                $('.carousel-inner').find('.carousel-item:first' ).addClass( 'active' );
+
+                
 
             //UNESCO Sites
             unescoNumber = result.data.unescoSites.nhits;
@@ -348,7 +385,7 @@ $('#selCountry').on('change', function() {
                     unescoLng = result.data.unescoSites.records[i].fields.coordinates[1];
                     unescoThumbnail = result.data.unescoSites.records[i].fields.image_url.filename;
                     unsescoDescription = result.data.unescoSites.records[i].fields.short_description;
-                    unescoUrl = result.data.unescoSites.records[i].fields.http_url;
+                    unescoUrl = `https://whc.unesco.org/en/list/${result.data.unescoSites.records[i].fields.id_number}`;
                     
                     unescoMarker = L.marker(new L.LatLng(unescoLat, unescoLng), ({icon: unescoIcon})).bindPopup(`<div class="markerContainer"><h3>${unescoSite}</h3><img class="markerThumbnail" src='https://whc.unesco.org/uploads/sites/${unescoThumbnail}'><p class="markerTxtDescription">${unsescoDescription}</p></div><div id="city-link"><a href="${unescoUrl}" target="_blank">Learn more</a></div>`, {
                         maxWidth : 300
