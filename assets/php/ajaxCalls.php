@@ -4,7 +4,7 @@
     $countryCodeA3 = null;
     $capitalCity = null;
     $countryFullName = null;
-    
+
     $countryName = null;
     $countryNameNoSpace = null;
     $capitalLat = null;
@@ -12,7 +12,7 @@
     $capitalCityNoSpace = null;
     $capitalCityWiped = null;
     $currentCurrency = null;
-    $wikiCountryName = null;
+   
 
     ini_set('display_errors', 'On');
     error_reporting(E_ALL);
@@ -58,94 +58,6 @@
     $capitalCityWiped = strtr( $capitalCityNoSpace, $unwanted_array );
     $currentCurrency = $restCountries['currencies'][0]['code'];
         
-    
-    //PositionStack API Call for capital city long and lat
-    $url ='http://api.positionstack.com/v1/forward?access_key=cc4a38f03554215037c505edf96abf81&query='. $capitalCityWiped .','.$countryNameNoSpace;
-    $ch = curl_init();
-
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_URL,$url);
-
-    $result=curl_exec($ch);
-    
-    curl_close($ch);
-    
-    $capitalData = json_decode($result,true);   
-    
-    $capitalLat = $capitalData['data'][0]['latitude'];
-    $capitalLng = $capitalData['data'][0]['longitude'];  
-
-    //UNESCO Sites
-    // $url='https://data.opendatasoft.com/api/records/1.0/search/?dataset=world-heritage-list%40public-us&q='.$countryFullName.'&rows=20&sort=date_inscribed&facet=category&facet=region&facet=states&refine.category=Cultural&refine.states='.$countryFullName;
-    $url = 'https://userclub.opendatasoft.com/api/records/1.0/search/?dataset=world-heritage-list&q='.$countryFullName.'&lang=en&sort=date_inscribed&facet=category&facet=region&facet=states';
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_URL,$url);
-
-    $result=curl_exec($ch);
-
-    curl_close($ch);
-
-    $unesco = json_decode($result,true);
-
-    //capital city hospitals
-    $url='https://discover.search.hereapi.com/v1/discover?at='.$capitalLat.','.$capitalLng.'&q=hospital&lang=en-US&in=countryCode:'.$countryCodeA3.'&limit=10&apiKey=vUAsu-QX6rLWXv_WfJqiy4F94uhDCTj7aWfdLWMaiqM';
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-    $capCityHospitals = json_decode($result,true);
-    
-    //capital city airports
-    $url='https://discover.search.hereapi.com/v1/discover?at='.$capitalLat.','.$capitalLng.'&q=airport&lang=en-US&in=countryCode:'.$countryCodeA3.'&limit=15&apiKey=vUAsu-QX6rLWXv_WfJqiy4F94uhDCTj7aWfdLWMaiqM';
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-    $capCityAirports = json_decode($result,true);
-    
-    //capital city parks
-    $url='https://discover.search.hereapi.com/v1/discover?at='.$capitalLat.','.$capitalLng.'&q=park&lang=en-US&in=countryCode:'.$countryCodeA3.'&limit=20&apiKey=vUAsu-QX6rLWXv_WfJqiy4F94uhDCTj7aWfdLWMaiqM';
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-    $capCityParks = json_decode($result,true);
-
-    //capital city museums
-    $url='https://discover.search.hereapi.com/v1/discover?at='.$capitalLat.','.$capitalLng.'&q=museum&lang=en-US&in=countryCode:'.$countryCodeA3.'&limit=25&apiKey=vUAsu-QX6rLWXv_WfJqiy4F94uhDCTj7aWfdLWMaiqM';
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-    $capCityMuseums = json_decode($result,true);
-
     //large cities in country
     $url='https://public.opendatasoft.com/api/records/1.0/search/?dataset=geonames-all-cities-with-a-population-1000&q=&rows=10&sort=population&facet=timezone&facet=country&refine.country_code='. $countryCodeA2;
 
@@ -166,7 +78,7 @@
     foreach ($largeCities['records'] as $key => $value) {
         $cityName = preg_replace('/\s+/', '%20', $value['fields']['name']);
             //wiki city wiki text info
-            $url='http://api.geonames.org/wikipediaSearchJSON?formatted=true&q=' . $cityName .'&maxRows=5&username=estrada1107&style=full';
+            $url='http://api.geonames.org/wikipediaSearchJSON?formatted=true&q=' . $cityName .'&maxRows=3&username=estrada1107&style=full';
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -188,15 +100,8 @@
     $output['status']['description'] = "success";
     $output['status']['executedIn'] = intval((microtime(true) - $executionStartTime) * 1000) . " ms";
     
-    
     $output['data']['border'] = $border;
     $output['data']['restCountries'] = $restCountries;
-    $output['data']['capitalData'] = $capitalData['data'][0];
-    $output['data']['unescoSites'] = $unesco;
-    $output['data']['capCityHospitals'] = $capCityHospitals;
-    $output['data']['capCityAirports'] = $capCityAirports;
-    $output['data']['capCityParks'] = $capCityParks;
-    $output['data']['capCityMuseums'] = $capCityMuseums;
     $output['data']['wikiCitiesTextData'] = $wikiCitiesTextData;
 
     echo json_encode($output);

@@ -7,7 +7,6 @@ let currencyCode;
 let currencyName;
 let currencySymbol;
 
-
 let capitalCityName;
 
 let unescoLayerGroup;
@@ -18,7 +17,7 @@ let unescoLng;
 let unescoMarker;
 let unescoNumber;
 
-let capCityCluster;
+let cityMarkersCluster;
 let wikiCluster;
 let largeCityCluster;
 
@@ -88,6 +87,7 @@ L.easyButton('<i class="fas fa-cloud-sun"></i>', function(){
             capitalLng: capitalLng
         },
         success: function(result) {
+            console.log(result);
             let weatherIcon = result.data.weather.current.weather[0].icon;
                 
             $('.txtCapitalWeatherName').html(capitalCityName);
@@ -209,6 +209,84 @@ L.easyButton('<i class="fas fa-virus"></i>', function(){
     $('#covidModal').modal('show');
 }, 'Covid-19 Information').addTo(map);
 
+//UNESCO Sites Easy Button
+
+var toggle = L.easyButton({
+    states: [{
+        stateName: 'add-markers',
+        icon: 'fa-landmark',
+        title: 'UNESCO (cultural) World Heritage Sites',
+        onClick: function(control) {
+        map.removeLayer(largeCityCluster);
+        $.ajax({
+            url: "assets/php/unesco.php",
+            type: 'GET',
+            dataType: "json",
+            data: {
+                countryFullName: countryName
+            },
+            success: function(result) {
+                console.log(result);
+                unescoNumber = result.data.unescoSites.nhits;
+                
+            unescoLayerGroup = new L.markerClusterGroup();
+            map.addLayer(unescoLayerGroup);
+
+            if (unescoNumber < 1) {
+                $('#unescoModal').modal('show');
+                map.addLayer(largeCityCluster);
+            } else if (unescoNumber > 0) {
+               for (let i = 0; i < result.data.unescoSites.records.length; i++) {
+    
+                unescoIcon = L.icon({
+                    iconUrl: 'assets/img/icons/unesco.svg',
+                    iconSize: [50, 50],
+                    popupAnchor: [0,-15]
+                });
+    
+                unescoSite = result.data.unescoSites.records[i].fields.site;
+                unescoLat = result.data.unescoSites.records[i].fields.coordinates[0];
+                unescoLng = result.data.unescoSites.records[i].fields.coordinates[1];
+                unescoThumbnail = result.data.unescoSites.records[i].fields.image_url.filename;
+                unsescoDescription = result.data.unescoSites.records[i].fields.short_description;
+                unescoUrl = `https://whc.unesco.org/en/list/${result.data.unescoSites.records[i].fields.id_number}`;
+                
+                unescoMarker = L.marker(new L.LatLng(unescoLat, unescoLng), ({icon: unescoIcon})).bindPopup(`<div class="markerContainer"><h3>${unescoSite}</h3><img class="markerThumbnail" src='https://whc.unesco.org/uploads/sites/${unescoThumbnail}'><p class="markerTxtDescription">${unsescoDescription}</p></div><div id="city-link"><a href="${unescoUrl}" target="_blank">Learn more</a></div>`, {
+                    maxWidth : 300
+                }); 
+
+                unescoLayerGroup.addLayer(unescoMarker);
+            }
+    
+        
+                
+                control.state('remove-markers');
+            };
+                
+    
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Unesco Data Error',textStatus, errorThrown);
+            }
+        });
+        
+        
+        }
+    }, {
+        icon: 'fa-undo',
+        stateName: 'remove-markers',
+        onClick: function(control) {
+        map.addLayer(largeCityCluster);
+        map.removeLayer(unescoLayerGroup);
+        control.state('add-markers');
+        },
+        title: 'remove markers'
+    }]
+    });
+    toggle.addTo(map);
+        
+
+
 
 $(document).ready(function () { 
 //populate select options
@@ -275,6 +353,10 @@ $(document).ready(function () {
 //Main Ajax Call
 $('#selCountry').on('change', function() {
     borderCountryCode = $("#selCountry").val();
+    if (map.hasLayer(unescoLayerGroup)) {
+                map.removeLayer(unescoLayerGroup);
+                toggle.state('add-markers');
+            }
     
     $.ajax({
         url: "assets/php/ajaxCalls.php",
@@ -315,13 +397,12 @@ $('#selCountry').on('change', function() {
                 countryName = result.data.border.properties.name;
                 capitalCityName = result.data.restCountries.capital;
                 currentCurrency = result.data.restCountries.currencies[0].code;
-                capitalLng = result.data.capitalData.latitude;
-                capitalLat = result.data.capitalData.longitude;
+                capitalLat = result.data.restCountries.latlng[0];
+                capitalLng = result.data.restCountries.latlng[1];
                 currencyCode = result.data.restCountries.currencies[0].code;
                 currencyName = result.data.restCountries.currencies[0].name;
                 currencySymbol = result.data.restCountries.currencies[0].symbol;
                 
-
                 //wiki country summary
                 let popoulation =  numberWithCommas(result.data.restCountries.population);
                 let area;
@@ -347,6 +428,7 @@ $('#selCountry').on('change', function() {
                         languages += language.name + " ";
                             }) 
                         }
+
                 $('#wikiModalLabel').html(result.data.restCountries.name);
                 $('#txtPopulation').html(popoulation);
                 $('#txtCapital').html(capitalCityName);
@@ -358,103 +440,13 @@ $('#selCountry').on('change', function() {
                 $('#txtDemonym').html(demonym);
                 $('#txtDomain').html(domain);
                 
-
-
-                
-
-            //UNESCO Sites
-            unescoNumber = result.data.unescoSites.nhits;
-
-            if (map.hasLayer(unescoLayerGroup)) {
-                map.removeLayer(unescoLayerGroup);
-            }
-            unescoLayerGroup = new L.markerClusterGroup();
-            map.addLayer(unescoLayerGroup);
-
-            //unescoLayerGroup = L.layerGroup();
-                for (let i = 0; i < result.data.unescoSites.records.length; i++) {
-
-                    unescoIcon = L.icon({
-                        iconUrl: 'assets/img/icons/unesco.svg',
-                        iconSize: [50, 50],
-                        popupAnchor: [0,-15]
-                    });
-
-                    unescoSite = result.data.unescoSites.records[i].fields.site;
-                    unescoLat = result.data.unescoSites.records[i].fields.coordinates[0];
-                    unescoLng = result.data.unescoSites.records[i].fields.coordinates[1];
-                    unescoThumbnail = result.data.unescoSites.records[i].fields.image_url.filename;
-                    unsescoDescription = result.data.unescoSites.records[i].fields.short_description;
-                    unescoUrl = `https://whc.unesco.org/en/list/${result.data.unescoSites.records[i].fields.id_number}`;
-                    
-                    unescoMarker = L.marker(new L.LatLng(unescoLat, unescoLng), ({icon: unescoIcon})).bindPopup(`<div class="markerContainer"><h3>${unescoSite}</h3><img class="markerThumbnail" src='https://whc.unesco.org/uploads/sites/${unescoThumbnail}'><p class="markerTxtDescription">${unsescoDescription}</p></div><div id="city-link"><a href="${unescoUrl}" target="_blank">Learn more</a></div>`, {
-                        maxWidth : 300
-                    });
-
-                    unescoLayerGroup.addLayer(unescoMarker);
-
-                };
-            
             //capital city cluster
-            if (map.hasLayer(capCityCluster)) {
-                map.removeLayer(capCityCluster);
+            if (map.hasLayer(cityMarkersCluster)) {
+                map.removeLayer(cityMarkersCluster);
             }
-            capCityCluster = new L.markerClusterGroup();
-            map.addLayer(capCityCluster);
 
-            //capital hospital markers
-            result.data.capCityHospitals.items.forEach(hospital => {
-                var hospitalIcon = L.icon({
-                    iconUrl: 'assets/img/icons/hospital.png',
-                    iconSize: [50, 50],
-                    popupAnchor: [0,-15]
-                    });
-                hospitalLabel = hospital.address.label;
-                hospitalLat = hospital.position.lat;
-                hospitalLng = hospital.position.lng;
-
-                var capCityMarker = L.marker(new L.LatLng(hospitalLat, hospitalLng), ({icon: hospitalIcon})).bindPopup(hospitalLabel);
-                capCityCluster.addLayer(capCityMarker);
-            });
-            //capital airport markers
-            result.data.capCityAirports.items.forEach(airport => {
-                var airportIcon = L.icon({
-                    iconUrl: 'assets/img/icons/airport.png',
-                    iconSize: [50, 50],
-                    popupAnchor: [0,-15]
-                    });
-                airportName = airport.title;
-                airportLat = airport.position.lat;
-                airportLng = airport.position.lng;
-                var capCityMarker = L.marker(new L.LatLng(airportLat, airportLng), ({icon: airportIcon})).bindPopup(airportName);
-                capCityCluster.addLayer(capCityMarker);
-            });
-            //capital parks markers
-            result.data.capCityParks.items.forEach(park => {
-                var parkIcon = L.icon({
-                    iconUrl: 'assets/img/icons/park.png',
-                    iconSize: [50, 50],
-                    popupAnchor: [0,-15]
-                    });
-                parkLabel = park.address.label;
-                parkLat = park.position.lat;
-                parkLng = park.position.lng;
-                var capCityMarker = L.marker(new L.LatLng(parkLat, parkLng), ({icon: parkIcon})).bindPopup(parkLabel);
-                capCityCluster.addLayer(capCityMarker);
-            });
-            //capital Museums markers
-            result.data.capCityMuseums.items.forEach(museum => {
-                var museumIcon = L.icon({
-                    iconUrl: 'assets/img/icons/museum.png',
-                    iconSize: [50, 50],
-                    popupAnchor: [0,-15]
-                    });
-                museumLabel = museum.address.label;
-                museumLat = museum.position.lat;
-                museumLng = museum.position.lng;
-                var capCityMarker = L.marker(new L.LatLng(museumLat, museumLng), ({icon: museumIcon})).bindPopup(museumLabel);
-                capCityCluster.addLayer(capCityMarker);
-            });
+            cityMarkersCluster = new L.markerClusterGroup();
+            map.addLayer(cityMarkersCluster);
 
             //cities markers with wiki summary
             if (map.hasLayer(largeCityCluster)) {
@@ -518,16 +510,18 @@ $('#selCountry').on('change', function() {
                     var largeCityMarker = L.marker(new L.LatLng(cityLat, cityLng), ({icon: cityIcon})).bindPopup(`<div class="markerContainer"><h3>${cityName}</h3><img class="markerThumbnail" src='${cityThumbnailImg}' onerror="this.style.display='none'"><p class="markerTxtDescription">${cityInfo}</p><div id="city-link"><a href="//${cityUrl}" target="_blank">${cityText}</a></div></div>`, cityOptions).once('click', function(e) {
                         map.flyTo(e.latlng, 10);
                         $.ajax({
-                            url: "assets/php/wikiLoops.php",
+                            url: "assets/php/cityMarkers.php",
                             type: 'GET',
                             dataType: 'json',
                             data: {
                                 lat: this.getLatLng().lat,
                                 lng: this.getLatLng().lng,
-                                countryCodeA2: borderCountryCode
+                                countryCodeA2: borderCountryCode,
+                                countryCodeA3: result.data.border.properties.iso_a3
                             },
                         
                             success: function(result) {
+                                console.log(result);
                                 //wiki Find Nearby Places for cities
                                 wikiCluster = new L.markerClusterGroup();
                                 
@@ -553,9 +547,147 @@ $('#selCountry').on('change', function() {
                                     
                                     var customPopup = `<div class="card" style="width: 18rem;"><div class="card-body"><h5 class="card-title">${wikiPlaceName}</h5><img class="img-thumbnail float-right" style="max-width: 100px" src="${wikiThumbnail}" onerror="this.style.display='none'"><p class="card-text" id="wiki-sum">${wikiSummary}</p><a href="//${wikiUrl}" target="_blank"class="card-link">Read more</a><a href="#" class="card-link"></a></div></div>`;
                                     
-                                    wikiPlaceMarker = L.marker(new L.LatLng(wikiPlaceLat, wikiPlaceLng), ({icon: wikiPlaceIcon})).bindPopup(customPopup,customOptions);
+                                    var alreadyExists = false;
+
+                                    var latlng = new L.LatLng(wikiPlaceLat, wikiPlaceLng);
+
+                                    cityMarkersCluster.getLayers().forEach((layer)=>{
+                                        if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
+                                        alreadyExists = true;
+                                        }
+                                    });
+
+                                    if(!alreadyExists){
+                                        var wikiPlaceMarker = L.marker(latlng, {
+                                        icon: wikiPlaceIcon
+                                        }).bindPopup(customPopup,customOptions);
+
+                                        cityMarkersCluster.addLayer(wikiPlaceMarker);
+                                    }
+
+                                });
+
+                                //capital hospital markers
+                                result.data.capCityHospitals.items.forEach(hospital => {
+                                    var hospitalIcon = L.icon({
+                                        iconUrl: 'assets/img/icons/hospital.png',
+                                        iconSize: [50, 50],
+                                        popupAnchor: [0,-15]
+                                        });
+                                    hospitalLabel = hospital.address.label;
+                                    hospitalLat = hospital.position.lat;
+                                    hospitalLng = hospital.position.lng;
                                     
-                                    capCityCluster.addLayer(wikiPlaceMarker);  
+                                    var alreadyExists = false;
+
+                                    var latlng = new L.LatLng(hospitalLat, hospitalLng);
+
+                                    cityMarkersCluster.getLayers().forEach((layer)=>{
+                                        if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
+                                        alreadyExists = true;
+                                        }
+                                    });
+
+                                    if(!alreadyExists){
+                                        var hospitalMarker = L.marker(latlng, {
+                                        icon: hospitalIcon
+                                        }).bindPopup(hospitalLabel);
+
+                                        cityMarkersCluster.addLayer(hospitalMarker);
+                                    }
+
+                                });
+                                //capital airport markers
+                                result.data.capCityAirports.items.forEach(airport => {
+                                    var airportIcon = L.icon({
+                                        iconUrl: 'assets/img/icons/airport.png',
+                                        iconSize: [50, 50],
+                                        popupAnchor: [0,-15]
+                                        });
+                                    airportName = airport.title;
+                                    airportLat = airport.position.lat;
+                                    airportLng = airport.position.lng;
+                                    
+                                    var alreadyExists = false;
+
+                                    var latlng = new L.LatLng(airportLat, airportLng);
+
+                                    cityMarkersCluster.getLayers().forEach((layer)=>{
+                                        if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
+                                        alreadyExists = true;
+                                        }
+                                    });
+
+                                    if(!alreadyExists){
+                                        var airportMarker = L.marker(latlng, {
+                                        icon: airportIcon
+                                        }).bindPopup(airportName);
+
+                                        cityMarkersCluster.addLayer(airportMarker);
+                                    }
+
+
+                                });
+                                //capital parks markers
+                                result.data.capCityParks.items.forEach(park => {
+                                    var parkIcon = L.icon({
+                                        iconUrl: 'assets/img/icons/park.png',
+                                        iconSize: [50, 50],
+                                        popupAnchor: [0,-15]
+                                        });
+                                    parkLabel = park.address.label;
+                                    parkLat = park.position.lat;
+                                    parkLng = park.position.lng;
+                                    
+                                    var alreadyExists = false;
+
+                                    var latlng = new L.LatLng(parkLat, parkLng);
+                                    
+                                    cityMarkersCluster.getLayers().forEach((layer)=>{
+                                        if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
+                                        alreadyExists = true;
+                                        }
+                                    });
+
+                                    if(!alreadyExists){
+                                        var parkMarker = L.marker(latlng, {
+                                        icon: parkIcon
+                                        }).bindPopup(parkLabel);
+
+                                        cityMarkersCluster.addLayer(parkMarker);
+                                    }
+
+                                });
+                                //capital Museums markers
+                                result.data.capCityMuseums.items.forEach(museum => {
+                                    var museumIcon = L.icon({
+                                        iconUrl: 'assets/img/icons/museum.png',
+                                        iconSize: [50, 50],
+                                        popupAnchor: [0,-15]
+                                        });
+                                    museumLabel = museum.address.label;
+                                    museumLat = museum.position.lat;
+                                    museumLng = museum.position.lng;
+                                    
+                                    var alreadyExists = false;
+
+                                    var latlng = new L.LatLng(museumLat, museumLng);
+                                    
+                                    cityMarkersCluster.getLayers().forEach((layer)=>{
+                                        if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
+                                        alreadyExists = true;
+                                        }
+                                    });
+
+                                    // if alreadyExists is true, it is a duplicate
+                                    if(!alreadyExists){
+                                        var museumMarker = L.marker(latlng, {
+                                        icon: museumIcon
+                                        }).bindPopup(museumLabel);
+
+                                        cityMarkersCluster.addLayer(museumMarker);
+                                    }
+
                                     
                                 });
                             },
