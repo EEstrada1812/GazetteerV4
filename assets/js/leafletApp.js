@@ -295,7 +295,7 @@ $(document).ready(function () {
         type: 'GET',
         dataType: "json",
         success: function(result) {
-            console.log('populate options' , result);
+            //console.log('populate options' , result);
             if (result.status.name == "ok") {
                 for (var i=0; i<result.data.border.features.length; i++) {
                             $('#selCountry').append($('<option>', {
@@ -324,7 +324,7 @@ $(document).ready(function () {
 
             success: function(result) {
                 
-                console.log('openCage User Location',result);
+                //console.log('openCage User Location',result);
                 currentLat = result.data[0].geometry.lat;
                 currentLng = result.data[0].geometry.lng;
 
@@ -370,7 +370,7 @@ $('#selCountry').on('change', function() {
         },
         success: function(result) {
             $('#loading').hide();
-            console.log(borderCountryCode, 'Results', result);
+            //console.log(borderCountryCode, 'Results', result);
             
             //adds borders
             if (map.hasLayer(border)) {
@@ -465,13 +465,21 @@ $('#selCountry').on('change', function() {
                 let cityText;
                 
                 result.data.wikiCitiesTextData.forEach(city => {
-                    if (city.geonames.length !== 0) {
-                        if (city.geonames[0].countryCode === borderCountryCode && city.geonames[0].title.includes(cityName)) {
-                            cityInfo = city.geonames[0].summary;
-                            cityThumbnailImg = city.geonames[0].thumbnailImg;
-                            cityUrl = city.geonames[0].wikipediaUrl;
+                        for (let i = 0; i < city.geonames.length; i++) {
+                            //console.log(city.geonames[i].title);
+                            // if (city.geonames[i].countryCode === borderCountryCode && city.geonames[i].title.includes(cityName)) {
+
+                            if (city.geonames[i].countryCode === borderCountryCode && city.geonames[i].title == cityName) {    
+                            //console.log('Code', city.geonames[i].countryCode, 'city', city.geonames[i].title);
+                            cityInfo = city.geonames[i].summary;
+                            cityThumbnailImg = city.geonames[i].thumbnailImg;
+                            cityUrl = city.geonames[i].wikipediaUrl;
                             cityText = 'Read more';
-                        };
+                            };
+
+                            
+                        }
+                        
 
                         if (cityInfo === null) {
                             cityInfo = " ";
@@ -481,7 +489,7 @@ $('#selCountry').on('change', function() {
                             
                         };
 
-                    }
+                    
 
                     var cityIcon;
 
@@ -520,7 +528,7 @@ $('#selCountry').on('change', function() {
                             },
                         
                             success: function(result) {
-                                console.log('cityMarkers',result);
+                                //console.log('cityMarkers',result);
                                 //capital hospital markers
                                 result.data.capCityHospitals.items.forEach(hospital => {
                                     var hospitalIcon = L.icon({
@@ -663,7 +671,7 @@ $('#selCountry').on('change', function() {
                             },
                         
                             success: function(result) {
-                                console.log('wikiMarkers',result);
+                                //console.log('wikiMarkers',result);
 
                                 if (result.data.wikiCitiesData.hasOwnProperty("status") ) {
                                     console.log('API Server Error, Please try again later:', result.data.wikiCitiesData.status.message)
