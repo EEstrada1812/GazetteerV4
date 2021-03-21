@@ -516,57 +516,11 @@ $('#selCountry').on('change', function() {
                             data: {
                                 lat: this.getLatLng().lat,
                                 lng: this.getLatLng().lng,
-                                countryCodeA2: borderCountryCode,
                                 countryCodeA3: result.data.border.properties.iso_a3
                             },
                         
                             success: function(result) {
-                                console.log(result);
-                                //wiki Find Nearby Places for cities
-                                wikiCluster = new L.markerClusterGroup();
-                                
-                                result.data.wikiCitiesData.geonames.forEach(place => {
-                                    
-                                    var wikiPlaceIcon = L.icon({
-                                        iconUrl: 'assets/img/icons/wikipedia.png',
-                                        iconSize: [50, 50], // size of the icon
-                                        popupAnchor: [0,-15]
-                                        });
-                                    var customOptions =
-                                        {
-                                        'maxWidth': '300',
-                                        'className' : 'custom'
-                                        };
-                                        
-                                    wikiPlaceName = place.title;
-                                    wikiPlaceLat = place.lat;
-                                    wikiPlaceLng = place.lng;
-                                    wikiSummary = place.summary;
-                                    wikiUrl = place.wikipediaUrl;
-                                    wikiThumbnail = place.thumbnailImg;
-                                    
-                                    var customPopup = `<div class="card" style="width: 18rem;"><div class="card-body"><h5 class="card-title">${wikiPlaceName}</h5><img class="img-thumbnail float-right" style="max-width: 100px" src="${wikiThumbnail}" onerror="this.style.display='none'"><p class="card-text" id="wiki-sum">${wikiSummary}</p><a href="//${wikiUrl}" target="_blank"class="card-link">Read more</a><a href="#" class="card-link"></a></div></div>`;
-                                    
-                                    var alreadyExists = false;
-
-                                    var latlng = new L.LatLng(wikiPlaceLat, wikiPlaceLng);
-
-                                    cityMarkersCluster.getLayers().forEach((layer)=>{
-                                        if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
-                                        alreadyExists = true;
-                                        }
-                                    });
-
-                                    if(!alreadyExists){
-                                        var wikiPlaceMarker = L.marker(latlng, {
-                                        icon: wikiPlaceIcon
-                                        }).bindPopup(customPopup,customOptions);
-
-                                        cityMarkersCluster.addLayer(wikiPlaceMarker);
-                                    }
-
-                                });
-
+                                console.log('cityMarkers',result);
                                 //capital hospital markers
                                 result.data.capCityHospitals.items.forEach(hospital => {
                                     var hospitalIcon = L.icon({
@@ -690,12 +644,87 @@ $('#selCountry').on('change', function() {
 
                                     
                                 });
+                                
+                                
+                                
                             },
                             error: function(jqXHR, textStatus, errorThrown) {
-                                console.log("wikiLoopPHP",textStatus, errorThrown);
+                                console.log("cityMarkers",textStatus, errorThrown);
                             }
-                        });
-                     });
+                        }); //end ajax call
+                        $.ajax({
+                            url: "assets/php/wikiMarkers.php",
+                            type: 'GET',
+                            dataType: 'json',
+                            data: {
+                                lat: this.getLatLng().lat,
+                                lng: this.getLatLng().lng,
+                                countryCodeA2: borderCountryCode,
+                            },
+                        
+                            success: function(result) {
+                                console.log('wikiMarkers',result);
+
+                                if (result.data.wikiCitiesData.hasOwnProperty("status") ) {
+                                    console.log('API Server Error, Please try again later:', result.data.wikiCitiesData.status.message)
+                                } else {
+                                    //wiki Find Nearby Places for cities
+                                    wikiCluster = new L.markerClusterGroup();
+                                                                    
+                                    result.data.wikiCitiesData.geonames.forEach(place => {
+                                        
+                                        var wikiPlaceIcon = L.icon({
+                                            iconUrl: 'assets/img/icons/wikipedia.png',
+                                            iconSize: [50, 50], // size of the icon
+                                            popupAnchor: [0,-15]
+                                            });
+                                        var customOptions =
+                                            {
+                                            'maxWidth': '300',
+                                            'className' : 'custom'
+                                            };
+                                            
+                                        wikiPlaceName = place.title;
+                                        wikiPlaceLat = place.lat;
+                                        wikiPlaceLng = place.lng;
+                                        wikiSummary = place.summary;
+                                        wikiUrl = place.wikipediaUrl;
+                                        wikiThumbnail = place.thumbnailImg;
+                                        
+                                        var customPopup = `<div class="card" style="width: 18rem;"><div class="card-body"><h5 class="card-title">${wikiPlaceName}</h5><img class="img-thumbnail float-right" style="max-width: 100px" src="${wikiThumbnail}" onerror="this.style.display='none'"><p class="card-text" id="wiki-sum">${wikiSummary}</p><a href="//${wikiUrl}" target="_blank"class="card-link">Read more</a><a href="#" class="card-link"></a></div></div>`;
+                                        
+                                        var alreadyExists = false;
+
+                                        var latlng = new L.LatLng(wikiPlaceLat, wikiPlaceLng);
+
+                                        cityMarkersCluster.getLayers().forEach((layer)=>{
+                                            if(!alreadyExists && layer instanceof L.Marker && layer.getLatLng().equals(latlng)){
+                                            alreadyExists = true;
+                                            }
+                                        });
+
+                                        if(!alreadyExists){
+                                            var wikiPlaceMarker = L.marker(latlng, {
+                                            icon: wikiPlaceIcon
+                                            }).bindPopup(customPopup,customOptions);
+
+                                            cityMarkersCluster.addLayer(wikiPlaceMarker);
+                                        };
+
+                                    });
+                                };
+
+                                
+                                
+                                
+                                
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.log("wikiMarkers",textStatus, errorThrown);
+                            }
+                        }); //end ajax call
+
+                     }); // end on click
     
                     largeCityCluster.addLayer(largeCityMarker);
                     
