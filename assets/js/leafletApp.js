@@ -1,3 +1,4 @@
+let bounds;
 let countryName;
 let border;
 let currentCountry;
@@ -87,7 +88,7 @@ L.easyButton('<i class="fas fa-cloud-sun"></i>', function(){
             capitalLng: capitalLng
         },
         success: function(result) {
-            console.log(result);
+            //console.log(result);
             let weatherIcon = result.data.weather.current.weather[0].icon;
                 
             $('.txtCapitalWeatherName').html(capitalCityName);
@@ -158,7 +159,7 @@ L.easyButton('<i class="fas fa-money-bill-wave"></i>', function(){
             currentCurrency: currentCurrency
         },
         success: function(result) {
-            console.log(result);
+            //console.log(result);
             let exchangeRate = result.data.currentRate;
             $('#txtCurrencySymbol').html(currencySymbol);
             $('#txtCurrency').html(currencyName);
@@ -218,6 +219,7 @@ var toggle = L.easyButton({
         title: 'UNESCO (cultural) World Heritage Sites',
         onClick: function(control) {
         map.removeLayer(largeCityCluster);
+        map.removeLayer(cityMarkersCluster);
         $.ajax({
             url: "assets/php/unesco.php",
             type: 'GET',
@@ -226,8 +228,14 @@ var toggle = L.easyButton({
                 countryFullName: countryName
             },
             success: function(result) {
-                console.log(result);
-                unescoNumber = result.data.unescoSites.nhits;
+            
+                map.flyToBounds(bounds, {
+                    padding: [0, 35], 
+                    duration: 2
+                });
+
+            //console.log(result);
+            unescoNumber = result.data.unescoSites.nhits;
                 
             unescoLayerGroup = new L.markerClusterGroup();
             map.addLayer(unescoLayerGroup);
@@ -235,6 +243,7 @@ var toggle = L.easyButton({
             if (unescoNumber < 1) {
                 $('#unescoModal').modal('show');
                 map.addLayer(largeCityCluster);
+                map.addLayer(cityMarkersCluster);
             } else if (unescoNumber > 0) {
                for (let i = 0; i < result.data.unescoSites.records.length; i++) {
     
@@ -277,7 +286,9 @@ var toggle = L.easyButton({
         stateName: 'remove-markers',
         onClick: function(control) {
         map.addLayer(largeCityCluster);
+        map.addLayer(cityMarkersCluster);
         map.removeLayer(unescoLayerGroup);
+
         control.state('add-markers');
         },
         title: 'remove markers'
@@ -383,7 +394,7 @@ $('#selCountry').on('change', function() {
                     opacity: 0.65
                 });
 
-            let bounds = border.getBounds();
+            bounds = border.getBounds();
             map.flyToBounds(bounds, {
                     padding: [0, 35], 
                     duration: 2
