@@ -526,7 +526,7 @@ $('#selCountry').on('change', function() {
                             });
                     }
 
-                    var largeCityMarker = L.marker(new L.LatLng(cityLat, cityLng), ({icon: cityIcon})).bindPopup(`<div class="markerContainer"><h3>${cityName}</h3><img class="markerThumbnail" src='${cityThumbnailImg}' onerror="this.style.display='none'"><p class="markerTxtDescription">${cityInfo}</p><div id="city-link"><a href="//${cityUrl}" target="_blank">${cityText}</a></div></div>`, cityOptions).once('click', function(e) {
+                    var largeCityMarker = L.marker(new L.LatLng(cityLat, cityLng), ({icon: cityIcon})).bindPopup(`<div class="markerContainer"><h3>${cityName}</h3><img class="markerThumbnail" src='${cityThumbnailImg}' onerror="this.style.display='none'"><p class="markerTxtDescription">${cityInfo}</p><div id="city-link"><a href="//${cityUrl}" target="_blank">${cityText}</a></div></div>`, cityOptions).on('click', function(e) {
                         map.flyTo(e.latlng, 10);
                         $.ajax({
                             url: "assets/php/cityMarkers.php",
@@ -685,7 +685,7 @@ $('#selCountry').on('change', function() {
                                 //console.log('wikiMarkers',result);
 
                                 if (result.data.wikiCitiesData.hasOwnProperty("status") ) {
-                                    console.log('API Server Error, Please try again later:', result.data.wikiCitiesData.status.message)
+                                    console.log('API Server Error, Please click again:', result.data.wikiCitiesData.status.message)
                                 } else {
                                     //wiki Find Nearby Places for cities
                                     wikiCluster = new L.markerClusterGroup();
