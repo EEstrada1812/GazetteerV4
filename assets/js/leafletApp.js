@@ -129,7 +129,6 @@ L.easyButton('<i class="far fa-newspaper"></i>', function(){
         },
         success: function(result) {
             $('.carousel-inner').empty();
-            //$(".overlay-image").html("&nbsp;");
             
             for (let i = 0; i < result.data.BingNews.value.length; i++) {
                 if (result.data.BingNews.value[i].image) {
