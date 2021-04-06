@@ -67,6 +67,9 @@ L.easyButton('<i class="fas fa-info"></i>', function(){
             countryName: countryName
         },
         success: function(result) {
+            $("#txtWikiImg").html("&nbsp;");
+            $("#txtWiki").html("&nbsp;");
+
             $('#txtWikiImg').html(`<img id='flag' src='${result.data.wikiCountryExcerpt.thumbnail.source}'><br>`);
             $('#txtWiki').html('<br>Wikipedia: ' + result.data.wikiCountryExcerpt.extract_html +'<br>');
         },
@@ -89,6 +92,7 @@ L.easyButton('<i class="fas fa-cloud-sun"></i>', function(){
         },
         success: function(result) {
             //console.log(result);
+            $("#weatherTable tbody tr td").html("&nbsp;"); 
             let weatherIcon = result.data.weather.current.weather[0].icon;
                 
             $('.txtCapitalWeatherName').html(capitalCityName);
@@ -124,20 +128,26 @@ L.easyButton('<i class="far fa-newspaper"></i>', function(){
             countryName: countryName
         },
         success: function(result) {
-            if ( $('.carousel-inner').text().length != 0 ) {
-                $('.carousel-inner').empty();
-            }
+            $('.carousel-inner').empty();
+            //$(".overlay-image").html("&nbsp;");
             
-            if ( $('.carousel-inner').text().length == 0 ) {
-                for (let i = 0; i < result.data.BingNews.value.length; i++) {
-                    if (result.data.BingNews.value[i].image) {
-                        $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(${result.data.BingNews.value[i].image.contentUrl});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
-                    }   
-                else {
-                    $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(assets/img/image-not-available.jpg});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
-                    }
-                };
-            }
+            for (let i = 0; i < result.data.BingNews.value.length; i++) {
+                if (result.data.BingNews.value[i].image) {
+                    $('.carousel-inner').append(`
+                        <div class="carousel-item">
+                            <div class="container">
+                                <div class="overlay-image" style="background-image: url(${result.data.BingNews.value[i].image.contentUrl});"></div>
+                                <div class="carousel-caption text-start">
+                                    <h5>${result.data.BingNews.value[i].name}</h5>
+                                    <p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p>
+                                </div>
+                            </div>
+                        </div>`);
+                }   
+            else {
+                $('.carousel-inner').append(`<div class="carousel-item"><div class="container"><div class="overlay-image" style="background-image: url(assets/img/image-not-available.jpg});"></div><div class="carousel-caption text-start"><h5>${result.data.BingNews.value[i].name}</h5><p><a class="btn btn-lg btn-primary" href="${result.data.BingNews.value[i].url}" target="_blank" role="button">Read Article</a></p></div></div></div>`);
+                }
+            };
 
             $('.carousel-inner').find('.carousel-item:first' ).addClass( 'active' );
         },
@@ -160,6 +170,8 @@ L.easyButton('<i class="fas fa-money-bill-wave"></i>', function(){
         },
         success: function(result) {
             //console.log(result);
+            $("#currencyTable currenctTBody currencyRow .currencyTD").html("&nbsp;");
+
             let exchangeRate = result.data.currentRate;
             $('#txtCurrencySymbol').html(currencySymbol);
             $('#txtCurrency').html(currencyName);
@@ -187,6 +199,7 @@ L.easyButton('<i class="fas fa-virus"></i>', function(){
             countryCodeA2: borderCountryCode
         },
         success: function(result) {
+            $("#covidTable tbody tr td").html("&nbsp;");
 
             let covidDeaths = result.data.covidData.data.latest_data.deaths;
             let covidConfirmed = result.data.covidData.data.latest_data.confirmed;
@@ -403,7 +416,7 @@ $('#selCountry').on('change', function() {
             border.addTo(map); 
             
             if (result.status.name == "ok") {
-                
+                $("#countryInfoTable tbody tr td").html("&nbsp;");
                 //set variables to reuse
                 countryName = result.data.border.properties.name;
                 capitalCityName = result.data.restCountries.capital;
@@ -478,9 +491,9 @@ $('#selCountry').on('change', function() {
                 result.data.wikiCitiesTextData.forEach(city => {
                         for (let i = 0; i < city.geonames.length; i++) {
                             //console.log(city.geonames[i].title);
-                            // if (city.geonames[i].countryCode === borderCountryCode && city.geonames[i].title.includes(cityName)) {
+                            // if (city.geonames[i].countryCode === borderCountryCode && city.geonames[i].title.includes(cityName) ) {
 
-                            if (city.geonames[i].countryCode === borderCountryCode && city.geonames[i].title == cityName) {    
+                            if (city.geonames[i].title == cityName && (city.geonames[i].countryCode === borderCountryCode || city.geonames[i].summary.includes(countryName))) {    
                             //console.log('Code', city.geonames[i].countryCode, 'city', city.geonames[i].title);
                             cityInfo = city.geonames[i].summary;
                             cityThumbnailImg = city.geonames[i].thumbnailImg;

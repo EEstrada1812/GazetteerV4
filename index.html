@@ -53,7 +53,7 @@
           <h5 class="modal-title" id="wikiModalLabel"></h5>
         </div>
         <div class="modal-body">
-          <table class="table">
+          <table id="countryInfoTable" class="table">
             <div id="txtWikiImg"></div>
             <tbody>
               <tr>
@@ -112,7 +112,7 @@
           
         </div>
         <div class="modal-body short-modal">
-          <table class="table">
+          <table id="covidTable" class="table">
             <tbody>
               <tr>
                 <th scope="row">Cases:</th>
@@ -157,7 +157,7 @@
         </div>
         <div class="modal-body short-modal">
           <h1 id="txtCapitalWeatherName"></h1>
-          <table class="table">
+          <table id="weatherTable" class="table">
             <tbody>
               <tr>
                 <td id="CapitalWeatherIcon"></td>
@@ -213,24 +213,24 @@
           
         </div>
         <div class="modal-body short-modal">
-          <table class="table">
-            <tbody>
-              <tr class="success">
+          <table id="currencyTable" class="table">
+            <tbody id="currenctTBody">
+              <tr class="success currencyRow">
                 <td>Name:</td>
-                <td id="txtCurrency"></td>
+                <td id="txtCurrency" class="currencyTD"></td>
 
               </tr>
-              <tr class="info">
+              <tr class="info currencyRow">
                 <td>Code:</td>
-                <td id="txtCurrencyCode"></td>
+                <td id="txtCurrencyCode" class="currencyTD"></td>
               </tr>
-              <tr class="success">
+              <tr class="success currencyRow">
                 <td>Symbol:</td>
-                <td id="txtCurrencySymbol"></td>
+                <td id="txtCurrencySymbol" class="currencyTD"></td>
               </tr>
-              <tr class="info">
+              <tr class="info currencyRow">
                 <td>Exhange Rate:</td>
-                <td id="txtRate">$</td>
+                <td id="txtRate" class="currencyTD">$</td>
               </tr>
             </tbody>
           </table>
